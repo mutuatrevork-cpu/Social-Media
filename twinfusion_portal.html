@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Twinfusion · Client Portal</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --teal: #2AACB8; --teal-dark: #1d8a94; --teal-lt: #E0F6F8;
+    --pink: #E8628A; --pink-lt: #FDE8EF;
+    --green: #7DC67A; --green-lt: #EDF7ED;
+    --blue: #7EC8D8; --blue-lt: #EAF6F9;
+    --dark: #2a2a2a; --mid: #555; --muted: #888;
+    --border: #e0e0e0; --bg: #f7f7f7; --white: #fff;
+    --radius: 10px; --radius-sm: 6px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+
+  /* ── LOGIN ── */
+  #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
+  .login-card { background: var(--white); border-radius: 16px; box-shadow: var(--shadow); padding: 2.5rem 2rem; width: 100%; max-width: 400px; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+  .logo-wings { position: relative; width: 36px; height: 26px; }
+  .wing-green { position: absolute; width: 22px; height: 14px; background: var(--green); border-radius: 50% 0 50% 0; top: 0; left: 4px; opacity: 0.9; }
+  .wing-blue  { position: absolute; width: 22px; height: 14px; background: var(--blue);  border-radius: 0 50% 0 50%; bottom: 0; left: 8px; opacity: 0.9; }
+  .wing-dot   { position: absolute; width: 7px; height: 7px; background: var(--pink); border-radius: 50%; bottom: 6px; left: 14px; z-index: 2; }
+  .logo-text { font-size: 22px; font-weight: 700; color: var(--dark); letter-spacing: -0.5px; }
+  .logo-text span { color: var(--teal); }
+  .login-heading { font-size: 16px; font-weight: 600; color: var(--dark); margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.75rem; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--mid); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; color: var(--dark); background: var(--bg); transition: border-color 0.15s; }
+  .field input:focus { outline: none; border-color: var(--teal); background: var(--white); }
+  .login-btn { width: 100%; padding: 11px; background: var(--teal); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: background 0.15s; }
+  .login-btn:hover { background: var(--teal-dark); }
+  .login-btn:disabled { background: #ccc; cursor: not-allowed; }
+  .error-msg { font-size: 12px; color: var(--pink); margin-top: 8px; min-height: 18px; font-weight: 500; }
+  .login-footer { margin-top: 1.5rem; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.6; }
+
+  /* ── DASHBOARD ── */
+  #dashScreen { display: none; min-height: 100vh; }
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 58px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar-logo { display: flex; align-items: center; gap: 8px; }
+  .mini-wings { position: relative; width: 22px; height: 16px; }
+  .mw-green { position: absolute; width: 14px; height: 9px; background: var(--green); border-radius: 50% 0 50% 0; top: 0; left: 2px; }
+  .mw-blue  { position: absolute; width: 14px; height: 9px; background: var(--blue);  border-radius: 0 50% 0 50%; bottom: 0; left: 5px; }
+  .mw-dot   { position: absolute; width: 5px; height: 5px; background: var(--pink); border-radius: 50%; bottom: 3px; left: 9px; z-index: 2; }
+  .topbar-brand { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .topbar-brand span { color: var(--teal); }
+  .topbar-divider { width: 1px; height: 20px; background: var(--border); }
+  .topbar-client { font-size: 13px; font-weight: 600; color: var(--teal); }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .admin-badge { font-size: 10px; background: var(--teal-lt); color: var(--teal); border-radius: 20px; padding: 3px 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .logout-btn { font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; font-weight: 500; transition: all 0.15s; }
+  .logout-btn:hover { background: var(--bg); color: var(--dark); }
+
+  .dash-body { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  .page-title { font-size: 20px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+
+  /* Loading */
+  .loading-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Stats grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .stat-val { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-val.teal  { color: var(--teal); }
+  .stat-val.pink  { color: var(--pink); }
+  .stat-val.green { color: var(--green); }
+  .stat-val.blue  { color: var(--blue); }
+
+  /* Section */
+  .section { margin-bottom: 1.5rem; }
+  .section-hd { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+
+  /* Week cards */
+  .week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .week-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .week-title { font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .week-date { font-size: 11px; color: var(--muted); font-weight: 400; display: block; margin-top: 2px; }
+  .wrow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .wrow:last-child { margin-bottom: 0; }
+  .wlabel { font-size: 12px; color: var(--muted); }
+  .wval { font-size: 13px; font-weight: 700; }
+  .wval.teal  { color: var(--teal); }
+  .wval.pink  { color: var(--pink); }
+  .wval.ig    { color: #C13584; }
+  .wval.tk    { color: #010101; }
+
+  /* Platform row */
+  .platform-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .plat-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 14px; }
+  .plat-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .plat-icon.ig { background: var(--pink-lt); }
+  .plat-icon.tk { background: var(--teal-lt); }
+  .plat-info {}
+  .plat-name { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .plat-val { font-size: 22px; font-weight: 700; }
+  .plat-val.ig { color: var(--pink); }
+  .plat-val.tk { color: var(--teal); }
+  .plat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Note */
+  .info-note { background: #FFF8E1; border: 1px solid #F0D060; border-radius: var(--radius); padding: 12px 16px; font-size: 12px; color: #7A5C00; line-height: 1.6; margin-bottom: 1.5rem; }
+  .info-note strong { font-weight: 700; }
+
+  /* Posts table */
+  .posts-table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--bg); font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--dark); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .badge-reel   { background: var(--teal-lt); color: var(--teal-dark); }
+  .badge-poster { background: var(--pink-lt);  color: var(--pink); }
+  .badge-yes    { background: #E8F5E9; color: #2E7D32; }
+  .badge-no     { background: #fafafa; color: #bbb; border: 1px solid #eee; }
+  .badge-sched  { background: #FFF8E1; color: #F57F17; }
+  .post-url { color: var(--teal); text-decoration: none; font-size: 12px; }
+  .post-url:hover { text-decoration: underline; }
+  .note-cell { font-size: 12px; color: var(--muted); font-style: italic; }
+  .empty-row td { text-align: center; color: var(--muted); padding: 2rem; font-size: 13px; }
+
+  /* Admin view */
+  .admin-company-hd { font-size: 14px; font-weight: 700; color: var(--teal); margin: 1.5rem 0 8px; padding-bottom: 6px; border-bottom: 2px solid var(--teal-lt); }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .platform-row { grid-template-columns: 1fr; }
+    .week-grid { grid-template-columns: repeat(2, 1fr); }
+    table { font-size: 12px; }
+    th, td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-wings">
+        <div class="wing-green"></div>
+        <div class="wing-blue"></div>
+        <div class="wing-dot"></div>
+      </div>
+      <div class="logo-text"><span>twin</span>fusion</div>
+    </div>
+    <div class="login-heading">Client Portal</div>
+    <div class="login-sub">Sign in to view your social media reports</div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="uInput" placeholder="your_username" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="pInput" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <div class="error-msg" id="errMsg"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign in</button>
+    <div class="login-footer">
+      Powered by <strong>Twinfusion</strong> · Data synced live from Google Sheets<br>
+      Contact your account manager if you need login help.
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══════════════════════════════════════════════════════ -->
+<div id="dashScreen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">
+        <div class="mini-wings">
+          <div class="mw-green"></div><div class="mw-blue"></div><div class="mw-dot"></div>
+        </div>
+        <div class="topbar-brand"><span>twin</span>fusion</div>
+      </div>
+      <div class="topbar-divider"></div>
+      <div class="topbar-client" id="topbarClient"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="admin-badge" id="adminBadge" style="display:none">Admin</div>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+    <div class="page-title" id="pageTitle"></div>
+    <div class="page-sub" id="pageSub"></div>
+
+    <div class="info-note">
+      <strong>💡 Note:</strong> A Reel and a Poster can both be created on the same day for the same company — they are tracked independently in separate rows.
+    </div>
+
+    <div id="dashContent">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <div>Loading your data from Google Sheets…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CONFIGURATION — edit these to change credentials
+// ══════════════════════════════════════════════════════════
+const SHEET_ID = '10xLRCaJ4-cgnR-cst_Wf66VEooUaCrOE';
+const WEEKS    = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+
+const USERS = {
+  'admin':         { password: 'Admin@TF2024',  company: null,            isAdmin: true  },
+  'maruti_mining': { password: 'MM2024#secure',  company: 'Maruti Mining', isAdmin: false },
+  'kk_empires':    { password: 'KK2024#secure',  company: 'KK Empires',   isAdmin: false },
+  'kenstar':       { password: 'KS2024#secure',  company: 'Kenstar',      isAdmin: false },
+  'jamali_tech':   { password: 'JT2024#secure',  company: 'Jamali Tech',  isAdmin: false },
+  'twinfusion':    { password: 'TF2024#secure',  company: 'Twinfusion',   isAdmin: false },
+};
+
+const COMPANIES = ['Maruti Mining','KK Empires','Kenstar','Jamali Tech','Twinfusion'];
+// Row indices in each week sheet (0-based): company i → reel row = 5 + i*2, poster row = 6 + i*2
+const REEL_ROWS   = COMPANIES.map((_,i) => 5 + i*2);
+const POSTER_ROWS = COMPANIES.map((_,i) => 6 + i*2);
+// Columns per day (0-based from col B=1): day d → type=1+d*6, igPosted=2+d*6, igUrl=3+d*6, tkPosted=4+d*6, tkUrl=5+d*6, note=6+d*6
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+// ══════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════
+let currentUser = null;
+
+function doLogin() {
+  const u = document.getElementById('uInput').value.trim().toLowerCase();
+  const p = document.getElementById('pInput').value;
+  const err = document.getElementById('errMsg');
+  const btn = document.getElementById('loginBtn');
+
+  if (!USERS[u] || USERS[u].password !== p) {
+    err.textContent = 'Incorrect username or password. Please try again.';
+    return;
+  }
+  err.textContent = '';
+  currentUser = { ...USERS[u], username: u };
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashScreen').style.display = 'block';
+
+  const company = currentUser.isAdmin ? 'All Clients' : currentUser.company;
+  document.getElementById('topbarClient').textContent = company;
+  document.getElementById('adminBadge').style.display = currentUser.isAdmin ? 'inline-block' : 'none';
+  document.getElementById('pageTitle').textContent = currentUser.isAdmin ? 'All Clients — Admin Overview' : company + ' — Social Media Report';
+  document.getElementById('pageSub').textContent = 'Live data from Google Sheets · Refresh the page to see latest updates';
+
+  loadData();
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('dashScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('uInput').value = '';
+  document.getElementById('pInput').value = '';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = 'Sign in';
+  document.getElementById('dashContent').innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Loading your data from Google Sheets…</div></div>';
+}
+
+// ══════════════════════════════════════════════════════════
+// DATA FETCHING
+// ══════════════════════════════════════════════════════════
+async function fetchSheet(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error('Could not fetch sheet: ' + sheetName);
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let cur = '', inQ = false, row = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === ',' && !inQ) { row.push(cur.trim()); cur = ''; continue; }
+    if ((ch === '\n' || ch === '\r') && !inQ) {
+      if (cur || row.length) { row.push(cur.trim()); rows.push(row); }
+      cur = ''; row = [];
+      if (ch === '\r' && text[i+1] === '\n') i++;
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur || row.length) { row.push(cur.trim()); rows.push(row); }
+  return rows;
+}
+
+function getCell(rows, r, c) {
+  if (!rows[r]) return '';
+  return (rows[r][c] || '').trim();
+}
+
+// Parse one week's data for all companies
+function parseWeek(rows) {
+  // Row 3 (index 3) has day headers with dates embedded like "Monday  05 Apr"
+  // Row 4 (index 4) has sub-headers
+  // Company rows start at index 5
+  const weekDate = getCell(rows, 2, 3); // D3
+  const data = {}; // company → { days: [{type,igPosted,igUrl,tkPosted,tkUrl,note} x7] x2slots }
+
+  COMPANIES.forEach((company, ci) => {
+    const reelR   = REEL_ROWS[ci];
+    const posterR = POSTER_ROWS[ci];
+    data[company] = { weekDate, reelDays: [], posterDays: [] };
+
+    for (let d = 0; d < 7; d++) {
+      const base = 1 + d * 6; // col B=1 per day block
+      data[company].reelDays.push({
+        day:      DAYS[d],
+        type:     getCell(rows, reelR, base),
+        igPosted: getCell(rows, reelR, base+1),
+        igUrl:    getCell(rows, reelR, base+2),
+        tkPosted: getCell(rows, reelR, base+3),
+        tkUrl:    getCell(rows, reelR, base+4),
+        note:     getCell(rows, reelR, base+5),
+      });
+      data[company].posterDays.push({
+        day:      DAYS[d],
+        type:     getCell(rows, posterR, base),
+        igPosted: getCell(rows, posterR, base+1),
+        igUrl:    getCell(rows, posterR, base+2),
+        tkPosted: getCell(rows, posterR, base+3),
+        tkUrl:    getCell(rows, posterR, base+4),
+        note:     getCell(rows, posterR, base+5),
+      });
+    }
+  });
+  return data;
+}
+
+async function loadData() {
+  try {
+    const allWeeks = [];
+    for (const wk of WEEKS) {
+      const rows = await fetchSheet(wk);
+      allWeeks.push(parseWeek(rows));
+    }
+    renderDash(allWeeks);
+  } catch(e) {
+    document.getElementById('dashContent').innerHTML =
+      `<div class="loading-state" style="color:#c00">
+        ⚠️ Could not load data from Google Sheets.<br>
+        <span style="font-size:12px;margin-top:8px;display:block">Make sure the sheet is shared publicly (View only).<br>${e.message}</span>
+      </div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// RENDERING
+// ══════════════════════════════════════════════════════════
+function countYes(arr, field) { return arr.filter(d => d[field].toLowerCase() === 'yes').length; }
+
+function companyStats(company, allWeeks) {
+  let reels=0, posters=0, ig=0, tk=0;
+  const wkStats = [];
+  allWeeks.forEach((wk, wi) => {
+    const d = wk[company];
+    if (!d) return;
+    const wReels   = d.reelDays.filter(r => r.igPosted.toLowerCase()==='yes'||r.tkPosted.toLowerCase()==='yes').length;
+    const wPosters = d.posterDays.filter(r => r.igPosted.toLowerCase()==='yes'||r.tkPosted.toLowerCase()==='yes').length;
+    const wIg      = countYes(d.reelDays,'igPosted') + countYes(d.posterDays,'igPosted');
+    const wTk      = countYes(d.reelDays,'tkPosted') + countYes(d.posterDays,'tkPosted');
+    reels += wReels; posters += wPosters; ig += wIg; tk += wTk;
+    wkStats.push({ weekDate: d.weekDate, reels: wReels, posters: wPosters, ig: wIg, tk: wTk });
+  });
+  return { reels, posters, ig, tk, wkStats };
+}
+
+function badgePosted(val) {
+  const v = (val||'').toLowerCase();
+  if (v === 'yes')       return `<span class="badge badge-yes">Yes</span>`;
+  if (v === 'scheduled') return `<span class="badge badge-sched">Scheduled</span>`;
+  return `<span class="badge badge-no">—</span>`;
+}
+
+function badgeType(val) {
+  const v = (val||'').toLowerCase();
+  if (v === 'reel')   return `<span class="badge badge-reel">Reel</span>`;
+  if (v === 'poster') return `<span class="badge badge-poster">Poster</span>`;
+  return `<span style="color:#ccc">—</span>`;
+}
+
+function urlCell(url) {
+  if (!url) return '<span style="color:#ccc">—</span>';
+  return `<a href="${url}" target="_blank" class="post-url">View ↗</a>`;
+}
+
+function renderCompanySection(company, allWeeks, showHeading=false) {
+  const stats = companyStats(company, allWeeks);
+  let html = '';
+  if (showHeading) html += `<div class="admin-company-hd">${company}</div>`;
+
+  // Summary stats
+  html += `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total Reels Posted</div><div class="stat-val teal">${stats.reels}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Posters Posted</div><div class="stat-val pink">${stats.posters}</div></div>
+    <div class="stat-card"><div class="stat-label">Instagram Posts</div><div class="stat-val" style="color:#C13584">${stats.ig}</div></div>
+    <div class="stat-card"><div class="stat-label">TikTok Posts</div><div class="stat-val blue">${stats.tk}</div></div>
+  </div>`;
+
+  // Weekly breakdown
+  html += `<div class="section"><div class="section-hd">Weekly Breakdown</div><div class="week-grid">`;
+  stats.wkStats.forEach((w, i) => {
+    html += `<div class="week-card">
+      <div class="week-title">Week ${i+1}<span class="week-date">${w.weekDate || ''}</span></div>
+      <div class="wrow"><span class="wlabel">Reels</span><span class="wval teal">${w.reels}</span></div>
+      <div class="wrow"><span class="wlabel">Posters</span><span class="wval pink">${w.posters}</span></div>
+      <div class="wrow"><span class="wlabel">Instagram</span><span class="wval ig">${w.ig}</span></div>
+      <div class="wrow"><span class="wlabel">TikTok</span><span class="wval teal">${w.tk}</span></div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // Platform totals
+  html += `<div class="section"><div class="section-hd">Platform Coverage</div>
+    <div class="platform-row">
+      <div class="plat-card"><div class="plat-icon ig">📸</div><div class="plat-info"><div class="plat-name">Instagram</div><div class="plat-val ig">${stats.ig}</div><div class="plat-sub">posts published</div></div></div>
+      <div class="plat-card"><div class="plat-icon tk">🎵</div><div class="plat-info"><div class="plat-name">TikTok</div><div class="plat-val tk">${stats.tk}</div><div class="plat-sub">posts published</div></div></div>
+    </div>
+  </div>`;
+
+  // Detailed posts table
+  html += `<div class="section"><div class="section-hd">All Posts Detail</div><div class="posts-table-wrap"><table>
+    <thead><tr><th>Week</th><th>Day</th><th>Type</th><th>IG</th><th>IG Link</th><th>TK</th><th>TK Link</th><th>Note</th></tr></thead>
+    <tbody>`;
+
+  let hasRows = false;
+  allWeeks.forEach((wk, wi) => {
+    const d = wk[company];
+    if (!d) return;
+    [...d.reelDays.map((r,i)=>({...r,slotType:'Reel'})), ...d.posterDays.map((r,i)=>({...r,slotType:'Poster'}))]
+      .sort((a,b)=> DAYS.indexOf(a.day) - DAYS.indexOf(b.day))
+      .forEach(row => {
+        const anyActivity = row.igPosted||row.tkPosted||row.igUrl||row.tkUrl||row.note;
+        if (!anyActivity) return;
+        hasRows = true;
+        html += `<tr>
+          <td>Wk ${wi+1}</td>
+          <td>${row.day}</td>
+          <td>${badgeType(row.slotType)}</td>
+          <td>${badgePosted(row.igPosted)}</td>
+          <td>${urlCell(row.igUrl)}</td>
+          <td>${badgePosted(row.tkPosted)}</td>
+          <td>${urlCell(row.tkUrl)}</td>
+          <td class="note-cell">${row.note||'—'}</td>
+        </tr>`;
+      });
+  });
+  if (!hasRows) html += `<tr class="empty-row"><td colspan="8">No posts recorded yet — data will appear here once the sheet is updated.</td></tr>`;
+  html += `</tbody></table></div></div>`;
+  return html;
+}
+
+function renderDash(allWeeks) {
+  let html = '';
+  if (currentUser.isAdmin) {
+    // Admin: show all companies
+    COMPANIES.forEach(company => {
+      html += renderCompanySection(company, allWeeks, true);
+    });
+  } else {
+    html = renderCompanySection(currentUser.company, allWeeks, false);
+  }
+  document.getElementById('dashContent').innerHTML = html;
+}
+</script>
+</body>
+</html>
