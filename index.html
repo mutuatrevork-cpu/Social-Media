@@ -531,9 +531,14 @@ new Chart(document.getElementById('mixChart'),{
 </div>
 <script>
 const USERS = {
-  'admin':       { password: 'Admin@TF2026', role: 'Admin' },
-  'boss':        { password: 'Boss@TF2026',  role: 'Director' },
-  'twinfusion':  { password: 'TF2026#view',  role: 'Manager' },
+  'admin':       { password: 'Admin@TF2026',    role: 'Admin' },
+  'boss':        { password: 'Boss@TF2026',     role: 'Director' },
+  'twinfusion':  { password: 'TF2026#view',     role: 'Manager' },
+  'maruti':      { password: 'Maruti@2026',     role: 'Client' },
+  'jamalitech':  { password: 'Jamali@2026',     role: 'Client' },
+  'kenstar':     { password: 'KenStar@2026',    role: 'Client' },
+  'saify':       { password: 'Saify@2026',      role: 'Client' },
+  'kkempires':   { password: 'KKEmpires@2026',  role: 'Client' },
 };
 function doLogin() {
   const u = document.getElementById('lu').value.trim().toLowerCase();
